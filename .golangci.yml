@@ -1,0 +1,15 @@
+run:
+  deadline: 5m
+  tests: false
+  modules-download-mode: readonly
+
+linters:
+  disable-all: true
+  enable:
+    - gofmt
+    - vet
+    - vetshadow
+    - gocyclo
+    - golint
+    - ineffassign
+    - misspell
