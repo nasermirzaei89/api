@@ -5,6 +5,7 @@ import (
 	"fmt"
 	_ "github.com/lib/pq" // import postgres driver
 	"github.com/nasermirzaei89/api/internal/repositories/postgres"
+	"github.com/nasermirzaei89/api/internal/services/post"
 	"github.com/nasermirzaei89/api/internal/services/user"
 	"github.com/nasermirzaei89/api/internal/transport/http"
 	"github.com/nasermirzaei89/env"
@@ -40,10 +41,12 @@ func main() {
 	db := postgresDB()
 
 	userRepo := postgres.NewUserRepository(db)
+	postRepo := postgres.NewPostRepository(db)
 
 	userSvc := user.NewService(userRepo, []byte(signKey), []byte(verificationKey))
+	postSvc := post.NewService(postRepo)
 
-	h := http.NewHandler(l, userSvc)
+	h := http.NewHandler(l, userSvc, postSvc)
 
 	err := gohttp.ListenAndServe(env.GetString("API_ADDRESS", ":80"), h)
 	if err != nil {

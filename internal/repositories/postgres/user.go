@@ -19,7 +19,8 @@ func (repo *userRepo) FindByUsername(ctx context.Context, username string) (*use
 	args := []interface{}{username}
 	dest := []interface{}{&model.UUID, &model.Username, &model.PasswordHash}
 
-	if err := repo.db.QueryRowContext(ctx, query, args...).Scan(dest...); err != nil {
+	err := repo.db.QueryRowContext(ctx, query, args...).Scan(dest...)
+	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
@@ -37,7 +38,8 @@ func (repo *userRepo) FindByUUID(ctx context.Context, userUUID string) (*user.En
 	args := []interface{}{userUUID}
 	dest := []interface{}{&model.UUID, &model.Username, &model.PasswordHash}
 
-	if err := repo.db.QueryRowContext(ctx, query, args...).Scan(dest...); err != nil {
+	err := repo.db.QueryRowContext(ctx, query, args...).Scan(dest...)
+	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}

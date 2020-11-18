@@ -24,3 +24,17 @@ query  {
     }
 }
 ```
+
+## Create a Post
+
+```graphql
+mutation ($title: String!, $slug: String!, $contentMarkdown: String!) {
+    createPost(request: {title: $title, slug: $slug, contentMarkdown: $contentMarkdown}) {
+        uuid
+        title
+        slug
+        contentMarkdown
+        contentHTML
+    }
+}
+```

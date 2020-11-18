@@ -6,6 +6,7 @@ schema {
 }
 
 type Mutation {
+    createPost(request: createPostRequest!): post!
     logIn(request: logInRequest!): logInResponse!
 }
 
@@ -18,9 +19,23 @@ type logInResponse {
     user: user!
 }
 
+type post {
+    contentHTML: String!
+    contentMarkdown: String!
+    slug: String!
+    title: String!
+    uuid: ID!
+}
+
 type user {
     username: String!
     uuid: ID!
+}
+
+input createPostRequest {
+    contentMarkdown: String!
+    slug: String = ""
+    title: String!
 }
 
 input logInRequest {

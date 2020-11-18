@@ -2,6 +2,7 @@ package http
 
 import (
 	"github.com/graphql-go/graphql"
+	"github.com/nasermirzaei89/api/internal/services/post"
 	"github.com/nasermirzaei89/api/internal/services/user"
 	"github.com/pkg/errors"
 	"net/http"
@@ -77,6 +78,44 @@ func (h *handler) newSchema() graphql.Schema {
 
 	types = append(types, typeUser)
 
+	typePost := graphql.NewObject(graphql.ObjectConfig{
+		Name: "post",
+		Fields: graphql.Fields{
+			"uuid": &graphql.Field{
+				Type: graphql.NewNonNull(graphql.ID),
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					return p.Source.(*post.Entity).UUID, nil
+				},
+			},
+			"title": &graphql.Field{
+				Type: graphql.NewNonNull(graphql.String),
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					return p.Source.(*post.Entity).Title, nil
+				},
+			},
+			"slug": &graphql.Field{
+				Type: graphql.NewNonNull(graphql.String),
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					return p.Source.(*post.Entity).Slug, nil
+				},
+			},
+			"contentMarkdown": &graphql.Field{
+				Type: graphql.NewNonNull(graphql.String),
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					return p.Source.(*post.Entity).ContentMarkdown, nil
+				},
+			},
+			"contentHTML": &graphql.Field{
+				Type: graphql.NewNonNull(graphql.String),
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					return p.Source.(*post.Entity).ContentHTML, nil
+				},
+			},
+		},
+	})
+
+	types = append(types, typeUser)
+
 	typeLogInRequest := graphql.NewInputObject(graphql.InputObjectConfig{
 		Name: "logInRequest",
 		Fields: graphql.InputObjectConfigFieldMap{
@@ -111,6 +150,24 @@ func (h *handler) newSchema() graphql.Schema {
 
 	types = append(types, typeLogInResponse)
 
+	typeCreatePostRequest := graphql.NewInputObject(graphql.InputObjectConfig{
+		Name: "createPostRequest",
+		Fields: graphql.InputObjectConfigFieldMap{
+			"title": &graphql.InputObjectFieldConfig{
+				Type: graphql.NewNonNull(graphql.String),
+			},
+			"slug": &graphql.InputObjectFieldConfig{
+				Type:         graphql.String,
+				DefaultValue: "",
+			},
+			"contentMarkdown": &graphql.InputObjectFieldConfig{
+				Type: graphql.NewNonNull(graphql.String),
+			},
+		},
+	})
+
+	types = append(types, typeLogInRequest)
+
 	query.AddFieldConfig("me",
 		&graphql.Field{
 			Type: graphql.NewNonNull(typeUser),
@@ -143,6 +200,30 @@ func (h *handler) newSchema() graphql.Schema {
 			},
 		},
 	)
+
+	mutation.AddFieldConfig("createPost",
+		&graphql.Field{
+			Args: graphql.FieldConfigArgument{
+				"request": &graphql.ArgumentConfig{
+					Type: graphql.NewNonNull(typeCreatePostRequest),
+				},
+			},
+			Type: graphql.NewNonNull(typePost),
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				userID := p.Context.Value(contextKeyUserUUID)
+				if userID == nil {
+					return nil, errors.New("unauthorized request")
+				}
+
+				req := p.Args["request"].(map[string]interface{})
+
+				return h.postSvc.CreatePost(p.Context, post.CreatePostRequest{
+					Title:           req["title"].(string),
+					Slug:            req["slug"].(string),
+					ContentMarkdown: req["contentMarkdown"].(string),
+				})
+			},
+		})
 
 	schemaConfig := graphql.SchemaConfig{
 		Query:    query,

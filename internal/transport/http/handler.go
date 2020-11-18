@@ -2,6 +2,7 @@ package http
 
 import (
 	"github.com/gorilla/mux"
+	"github.com/nasermirzaei89/api/internal/services/post"
 	"github.com/nasermirzaei89/api/internal/services/user"
 	"net/http"
 )
@@ -9,13 +10,14 @@ import (
 type handler struct {
 	router  *mux.Router
 	userSvc user.Service
+	postSvc post.Service
 }
 
 func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.router.ServeHTTP(w, r)
 }
 
-func NewHandler(l loggerInterface, userSvc user.Service) http.Handler {
+func NewHandler(l loggerInterface, userSvc user.Service, postSvc post.Service) http.Handler {
 	r := mux.NewRouter()
 
 	r.Use(cors())
@@ -26,6 +28,7 @@ func NewHandler(l loggerInterface, userSvc user.Service) http.Handler {
 	h := handler{
 		router:  r,
 		userSvc: userSvc,
+		postSvc: postSvc,
 	}
 
 	h.router.Methods(http.MethodPost).Path("/graphql").HandlerFunc(h.handleGraphQL())
