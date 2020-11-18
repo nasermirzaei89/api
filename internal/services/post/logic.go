@@ -17,11 +17,24 @@ type service struct {
 func (svc *service) GetPostByUUID(ctx context.Context, postUUID string) (*Entity, error) {
 	entity, err := svc.repo.FindByUUID(ctx, postUUID)
 	if err != nil {
-		return nil, errors.Wrap(err, "error on find by uuid")
+		return nil, errors.Wrap(err, "error on find post by uuid")
 	}
 
 	if entity == nil {
 		return nil, ErrPostWithUUIDNotFound{UUID: postUUID}
+	}
+
+	return entity, nil
+}
+
+func (svc *service) GetPostBySlug(ctx context.Context, slug string) (*Entity, error) {
+	entity, err := svc.repo.FindBySlug(ctx, slug)
+	if err != nil {
+		return nil, errors.Wrap(err, "error on find post by slug")
+	}
+
+	if entity == nil {
+		return nil, ErrPostWithSlugNotFound{Slug: slug}
 	}
 
 	return entity, nil
@@ -39,7 +52,7 @@ func (svc *service) CreatePost(ctx context.Context, req CreatePostRequest) (*Ent
 	for {
 		entity, err := svc.repo.FindBySlug(ctx, uniqueSlug)
 		if err != nil {
-			return nil, errors.Wrap(err, "error on find by slug")
+			return nil, errors.Wrap(err, "error on find post by slug")
 		}
 
 		if entity == nil {

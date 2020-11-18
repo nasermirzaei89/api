@@ -245,6 +245,20 @@ func (h *handler) newSchema() graphql.Schema {
 		},
 	)
 
+	query.AddFieldConfig("getPostBySlug",
+		&graphql.Field{
+			Args: graphql.FieldConfigArgument{
+				"slug": &graphql.ArgumentConfig{
+					Type: graphql.NewNonNull(graphql.String),
+				},
+			},
+			Type: graphql.NewNonNull(typePost),
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				return h.postSvc.GetPostBySlug(p.Context, p.Args["slug"].(string))
+			},
+		},
+	)
+
 	schemaConfig := graphql.SchemaConfig{
 		Query:    query,
 		Mutation: mutation,
