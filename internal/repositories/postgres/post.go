@@ -11,6 +11,29 @@ type postRepo struct {
 	db *sql.DB
 }
 
+func (repo *postRepo) List(ctx context.Context) ([]*post.Entity, error) {
+	query := `SELECT uuid, title, slug, content_markdown, content_html FROM posts;`
+
+	rows, err := repo.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, errors.Wrap(errors.WithStack(err), "error on query")
+	}
+
+	res := make([]*post.Entity, 0)
+	for rows.Next() {
+		var model post.Entity
+		dest := []interface{}{&model.UUID, &model.Title, &model.Slug, &model.ContentMarkdown, &model.ContentHTML}
+		err = rows.Scan(dest...)
+		if err != nil {
+			return nil, errors.Wrap(err, "error on scan row")
+		}
+
+		res = append(res, &model)
+	}
+
+	return res, nil
+}
+
 func (repo *postRepo) FindByUUID(ctx context.Context, uuid string) (*post.Entity, error) {
 	var model post.Entity
 

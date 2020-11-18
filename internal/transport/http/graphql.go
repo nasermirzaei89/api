@@ -259,6 +259,20 @@ func (h *handler) newSchema() graphql.Schema {
 		},
 	)
 
+	query.AddFieldConfig("listPosts",
+		&graphql.Field{
+			Type: graphql.NewNonNull(graphql.NewList(graphql.NewNonNull(typePost))),
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				userID := p.Context.Value(contextKeyUserUUID)
+				if userID == nil {
+					return nil, errors.New("unauthorized request")
+				}
+
+				return h.postSvc.ListPosts(p.Context)
+			},
+		},
+	)
+
 	schemaConfig := graphql.SchemaConfig{
 		Query:    query,
 		Mutation: mutation,

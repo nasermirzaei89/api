@@ -8,6 +8,7 @@ type Service interface {
 	CreatePost(ctx context.Context, req CreatePostRequest) (res *Entity, err error)
 	GetPostByUUID(ctx context.Context, postUUID string) (res *Entity, err error)
 	GetPostBySlug(ctx context.Context, slug string) (res *Entity, err error)
+	ListPosts(ctx context.Context) (res []*Entity, err error)
 }
 
 type CreatePostRequest struct {

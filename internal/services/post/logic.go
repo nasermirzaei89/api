@@ -40,6 +40,15 @@ func (svc *service) GetPostBySlug(ctx context.Context, slug string) (*Entity, er
 	return entity, nil
 }
 
+func (svc *service) ListPosts(ctx context.Context) ([]*Entity, error) {
+	res, err := svc.repo.List(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "error on list posts")
+	}
+
+	return res, nil
+}
+
 func (svc *service) CreatePost(ctx context.Context, req CreatePostRequest) (*Entity, error) {
 	if req.Slug == "" {
 		req.Slug = req.Title
