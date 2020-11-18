@@ -1,0 +1,29 @@
+# This file was generated based on ".graphqlconfig". Do not edit manually.
+
+schema {
+    query: Query
+    mutation: Mutation
+}
+
+type Mutation {
+    logIn(request: logInRequest!): logInResponse!
+}
+
+type Query {
+    me: user!
+}
+
+type logInResponse {
+    accessToken: String!
+    user: user!
+}
+
+type user {
+    username: String!
+    uuid: ID!
+}
+
+input logInRequest {
+    password: String!
+    username: String!
+}

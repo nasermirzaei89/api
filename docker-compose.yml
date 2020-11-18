@@ -1,0 +1,68 @@
+version: "3.8"
+
+services:
+  traefik:
+    image: traefik:v2.3.0
+    ports:
+      - 80:80
+      - 5432:5432
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    environment:
+      # show hits in stdout for debugging
+      TRAEFIK_ACCESSLOG: "true"
+      # enable dashboard for debugging on 8080
+      TRAEFIK_API: "true"
+      TRAEFIK_API_INSECURE: "true"
+      # route to things from docker
+      TRAEFIK_PROVIDERS_DOCKER: "true"
+      TRAEFIK_PROVIDERS_DOCKER_EXPOSEDBYDEFAULT: "false"
+      # but only if they have the label 'traefik.environment=nasermirzaei89'
+      TRAEFIK_PROVIDERS_DOCKER_CONSTRAINTS: "Label(`traefik.environment`, `nasermirzaei89`)"
+      # expose :80 as the "web" endpoint
+      TRAEFIK_ENTRYPOINTS_WEB: "true"
+      TRAEFIK_ENTRYPOINTS_WEB_ADDRESS: :80
+      TRAEFIK_ENTRYPOINTS_POSTGRES: "true"
+      TRAEFIK_ENTRYPOINTS_POSTGRES_ADDRESS: :5432
+    labels:
+      traefik.enable: "true"
+      traefik.environment: nasermirzaei89
+      traefik.http.routers.traefik.rule: "Host(`traefik.nasermirzaei89.localhost`)"
+      traefik.http.routers.traefik.entrypoints: web
+      traefik.http.services.traefik.loadbalancer.server.port: 8080
+
+  postgres:
+    image: postgres:13.0-alpine
+    environment:
+      POSTGRES_DB: $POSTGRES_DB
+      POSTGRES_USER: $POSTGRES_USER
+      POSTGRES_PASSWORD: $POSTGRES_PASSWORD
+    depends_on:
+      - traefik
+    labels:
+      traefik.enable: "true"
+      traefik.environment: nasermirzaei89
+      traefik.tcp.routers.postgres.rule: "HostSNI(`*`)"
+      traefik.tcp.routers.postgres.service: postgres
+      traefik.tcp.routers.postgres.entrypoints: postgres
+      traefik.tcp.services.postgres.loadbalancer.server.port: 5432
+
+  api:
+    image: nasermirzaei89/api:dev
+    build: .
+    depends_on:
+      - traefik
+      - postgres
+    environment:
+      API_POSTGRES_DSN: $API_POSTGRES_DSN
+      API_POSTGRES_MAX_IDLE_CONNECTIONS: 10
+      API_POSTGRES_MAX_OPEN_CONNECTIONS: 10
+      API_SIGN_KEY: $API_SIGN_KEY
+      API_VERIFICATION_KEY: $API_VERIFICATION_KEY
+      API_ADDRESS: 0.0.0.0:8080
+    labels:
+      traefik.enable: "true"
+      traefik.environment: nasermirzaei89
+      traefik.http.routers.api.rule: "Host(`api.nasermirzaei89.localhost`)"
+      traefik.http.routers.api.entrypoints: web
+      traefik.http.services.api.loadbalancer.server.port: 8080

@@ -1,0 +1,14 @@
+{
+  "name": "API GraphQL Schema",
+  "schemaPath": "schema.graphql",
+  "extensions": {
+    "endpoints": {
+      "Development": {
+        "url": "http://api.nasermirzaei89.localhost/graphql",
+        "headers": {
+        },
+        "introspect": false
+      }
+    }
+  }
+}
