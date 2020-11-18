@@ -150,24 +150,6 @@ func (h *handler) newSchema() graphql.Schema {
 
 	types = append(types, typeLogInResponse)
 
-	typeCreatePostRequest := graphql.NewInputObject(graphql.InputObjectConfig{
-		Name: "createPostRequest",
-		Fields: graphql.InputObjectConfigFieldMap{
-			"title": &graphql.InputObjectFieldConfig{
-				Type: graphql.NewNonNull(graphql.String),
-			},
-			"slug": &graphql.InputObjectFieldConfig{
-				Type:         graphql.String,
-				DefaultValue: "",
-			},
-			"contentMarkdown": &graphql.InputObjectFieldConfig{
-				Type: graphql.NewNonNull(graphql.String),
-			},
-		},
-	})
-
-	types = append(types, typeLogInRequest)
-
 	query.AddFieldConfig("me",
 		&graphql.Field{
 			Type: graphql.NewNonNull(typeUser),
@@ -201,6 +183,24 @@ func (h *handler) newSchema() graphql.Schema {
 		},
 	)
 
+	typeCreatePostRequest := graphql.NewInputObject(graphql.InputObjectConfig{
+		Name: "createPostRequest",
+		Fields: graphql.InputObjectConfigFieldMap{
+			"title": &graphql.InputObjectFieldConfig{
+				Type: graphql.NewNonNull(graphql.String),
+			},
+			"slug": &graphql.InputObjectFieldConfig{
+				Type:         graphql.String,
+				DefaultValue: "",
+			},
+			"contentMarkdown": &graphql.InputObjectFieldConfig{
+				Type: graphql.NewNonNull(graphql.String),
+			},
+		},
+	})
+
+	types = append(types, typeCreatePostRequest)
+
 	mutation.AddFieldConfig("createPost",
 		&graphql.Field{
 			Args: graphql.FieldConfigArgument{
@@ -218,6 +218,52 @@ func (h *handler) newSchema() graphql.Schema {
 				req := p.Args["request"].(map[string]interface{})
 
 				return h.postSvc.CreatePost(p.Context, post.CreatePostRequest{
+					Title:           req["title"].(string),
+					Slug:            req["slug"].(string),
+					ContentMarkdown: req["contentMarkdown"].(string),
+				})
+			},
+		},
+	)
+
+	typeUpdatePostByUUIDRequest := graphql.NewInputObject(graphql.InputObjectConfig{
+		Name: "updatePostByUUIDRequest",
+		Fields: graphql.InputObjectConfigFieldMap{
+			"title": &graphql.InputObjectFieldConfig{
+				Type: graphql.NewNonNull(graphql.String),
+			},
+			"slug": &graphql.InputObjectFieldConfig{
+				Type:         graphql.String,
+				DefaultValue: "",
+			},
+			"contentMarkdown": &graphql.InputObjectFieldConfig{
+				Type: graphql.NewNonNull(graphql.String),
+			},
+		},
+	})
+
+	types = append(types, typeUpdatePostByUUIDRequest)
+
+	mutation.AddFieldConfig("updatePostByUUID",
+		&graphql.Field{
+			Args: graphql.FieldConfigArgument{
+				"uuid": &graphql.ArgumentConfig{
+					Type: graphql.NewNonNull(graphql.ID),
+				},
+				"request": &graphql.ArgumentConfig{
+					Type: graphql.NewNonNull(typeUpdatePostByUUIDRequest),
+				},
+			},
+			Type: graphql.NewNonNull(typePost),
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				userID := p.Context.Value(contextKeyUserUUID)
+				if userID == nil {
+					return nil, errors.New("unauthorized request")
+				}
+
+				req := p.Args["request"].(map[string]interface{})
+
+				return h.postSvc.UpdatePostByUUID(p.Context, p.Args["uuid"].(string), post.UpdatePostByUUIDRequest{
 					Title:           req["title"].(string),
 					Slug:            req["slug"].(string),
 					ContentMarkdown: req["contentMarkdown"].(string),

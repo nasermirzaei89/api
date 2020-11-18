@@ -11,6 +11,18 @@ type postRepo struct {
 	db *sql.DB
 }
 
+func (repo *postRepo) UpdateByUUID(ctx context.Context, uuid string, entity post.Entity) error {
+	query := `UPDATE posts SET uuid = $1, title = $2, slug = $3, content_markdown = $4, content_html = $5 WHERE uuid = $6;`
+	args := []interface{}{entity.UUID, entity.Title, entity.Slug, entity.ContentMarkdown, entity.ContentHTML, uuid}
+
+	_, err := repo.db.ExecContext(ctx, query, args...)
+	if err != nil {
+		return errors.Wrap(errors.WithStack(err), "error on exec")
+	}
+
+	return nil
+}
+
 func (repo *postRepo) List(ctx context.Context) ([]*post.Entity, error) {
 	query := `SELECT uuid, title, slug, content_markdown, content_html FROM posts;`
 

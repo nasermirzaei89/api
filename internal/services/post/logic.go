@@ -14,6 +14,54 @@ type service struct {
 	repo Repository
 }
 
+func (svc *service) UpdatePostByUUID(ctx context.Context, postUUID string, req UpdatePostByUUIDRequest) (*Entity, error) {
+	entity, err := svc.repo.FindByUUID(ctx, postUUID)
+	if err != nil {
+		return nil, errors.Wrap(err, "error on find post by uuid")
+	}
+
+	if entity == nil {
+		return nil, ErrPostWithUUIDNotFound{UUID: postUUID}
+	}
+
+	if req.Slug == "" {
+		req.Slug = req.Title
+	}
+
+	req.Slug = slug.Make(req.Slug)
+
+	index := 1
+	uniqueSlug := req.Slug
+	for {
+		entity, err := svc.repo.FindBySlug(ctx, uniqueSlug)
+		if err != nil {
+			return nil, errors.Wrap(err, "error on find post by slug")
+		}
+
+		if entity == nil || entity.UUID == postUUID {
+			req.Slug = uniqueSlug
+			break
+		}
+
+		index++
+		uniqueSlug = fmt.Sprintf("%s-%d", req.Slug, index)
+	}
+
+	contentHTML := string(markdown.ToHTML([]byte(req.ContentMarkdown), parser.New(), nil))
+
+	entity.Title = req.Title
+	entity.Slug = req.Slug
+	entity.ContentMarkdown = req.ContentMarkdown
+	entity.ContentHTML = contentHTML
+
+	err = svc.repo.UpdateByUUID(ctx, postUUID, *entity)
+	if err != nil {
+		return nil, errors.Wrap(err, "error on update post by uuid")
+	}
+
+	return entity, nil
+}
+
 func (svc *service) GetPostByUUID(ctx context.Context, postUUID string) (*Entity, error) {
 	entity, err := svc.repo.FindByUUID(ctx, postUUID)
 	if err != nil {
