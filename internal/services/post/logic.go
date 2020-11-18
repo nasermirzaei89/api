@@ -14,6 +14,19 @@ type service struct {
 	repo Repository
 }
 
+func (svc *service) GetPostByUUID(ctx context.Context, postUUID string) (*Entity, error) {
+	entity, err := svc.repo.FindByUUID(ctx, postUUID)
+	if err != nil {
+		return nil, errors.Wrap(err, "error on find by uuid")
+	}
+
+	if entity == nil {
+		return nil, ErrPostWithUUIDNotFound{UUID: postUUID}
+	}
+
+	return entity, nil
+}
+
 func (svc *service) CreatePost(ctx context.Context, req CreatePostRequest) (*Entity, error) {
 	if req.Slug == "" {
 		req.Slug = req.Title

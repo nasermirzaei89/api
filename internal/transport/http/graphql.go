@@ -223,7 +223,27 @@ func (h *handler) newSchema() graphql.Schema {
 					ContentMarkdown: req["contentMarkdown"].(string),
 				})
 			},
-		})
+		},
+	)
+
+	query.AddFieldConfig("getPostByUUID",
+		&graphql.Field{
+			Args: graphql.FieldConfigArgument{
+				"uuid": &graphql.ArgumentConfig{
+					Type: graphql.NewNonNull(graphql.ID),
+				},
+			},
+			Type: graphql.NewNonNull(typePost),
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				userID := p.Context.Value(contextKeyUserUUID)
+				if userID == nil {
+					return nil, errors.New("unauthorized request")
+				}
+
+				return h.postSvc.GetPostByUUID(p.Context, p.Args["uuid"].(string))
+			},
+		},
+	)
 
 	schemaConfig := graphql.SchemaConfig{
 		Query:    query,
