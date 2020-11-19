@@ -14,6 +14,12 @@ func (h *handler) handleUploadFile() http.HandlerFunc {
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
+		userID := r.Context().Value(contextKeyUserUUID)
+		if userID == nil {
+			respond(w, r, unauthorized("unauthorized request"))
+			return
+		}
+
 		res, err := h.fileSvc.UploadFile(r.Context(), r.Body)
 		if err != nil {
 			respond(w, r, internalServerError(errors.Wrap(err, "error on upload file")))
