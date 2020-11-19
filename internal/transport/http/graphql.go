@@ -6,6 +6,7 @@ import (
 	"github.com/nasermirzaei89/api/internal/services/user"
 	"github.com/pkg/errors"
 	"net/http"
+	"time"
 )
 
 func (h *handler) handleGraphQL() http.HandlerFunc {
@@ -109,6 +110,17 @@ func (h *handler) newSchema() graphql.Schema {
 				Type: graphql.NewNonNull(graphql.String),
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 					return p.Source.(*post.Entity).ContentHTML, nil
+				},
+			},
+			"publishedAt": &graphql.Field{
+				Type: graphql.String,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					publishedAt := p.Source.(*post.Entity).PublishedAt
+					if publishedAt != nil {
+						return publishedAt.Format(time.RFC3339), nil
+					}
+
+					return nil, nil
 				},
 			},
 		},
@@ -272,6 +284,25 @@ func (h *handler) newSchema() graphql.Schema {
 		},
 	)
 
+	mutation.AddFieldConfig("publishPostByUUID",
+		&graphql.Field{
+			Args: graphql.FieldConfigArgument{
+				"uuid": &graphql.ArgumentConfig{
+					Type: graphql.NewNonNull(graphql.ID),
+				},
+			},
+			Type: graphql.NewNonNull(typePost),
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				userID := p.Context.Value(contextKeyUserUUID)
+				if userID == nil {
+					return nil, errors.New("unauthorized request")
+				}
+
+				return h.postSvc.PublishPostByUUID(p.Context, p.Args["uuid"].(string))
+			},
+		},
+	)
+
 	query.AddFieldConfig("getPostByUUID",
 		&graphql.Field{
 			Args: graphql.FieldConfigArgument{
@@ -291,7 +322,7 @@ func (h *handler) newSchema() graphql.Schema {
 		},
 	)
 
-	query.AddFieldConfig("getPostBySlug",
+	query.AddFieldConfig("getPublishedPostBySlug",
 		&graphql.Field{
 			Args: graphql.FieldConfigArgument{
 				"slug": &graphql.ArgumentConfig{
@@ -300,7 +331,7 @@ func (h *handler) newSchema() graphql.Schema {
 			},
 			Type: graphql.NewNonNull(typePost),
 			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				return h.postSvc.GetPostBySlug(p.Context, p.Args["slug"].(string))
+				return h.postSvc.GetPublishedPostBySlug(p.Context, p.Args["slug"].(string))
 			},
 		},
 	)

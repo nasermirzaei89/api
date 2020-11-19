@@ -17,3 +17,11 @@ type ErrPostWithSlugNotFound struct {
 func (err ErrPostWithSlugNotFound) Error() string {
 	return fmt.Sprintf("post with slug '%s' not found", err.Slug)
 }
+
+type ErrPostWithSlugNotPublished struct {
+	Slug string
+}
+
+func (err ErrPostWithSlugNotPublished) Error() string {
+	return fmt.Sprintf("post with slug '%s' not published", err.Slug)
+}

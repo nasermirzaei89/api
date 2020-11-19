@@ -8,10 +8,34 @@ import (
 	"github.com/google/uuid"
 	"github.com/gosimple/slug"
 	"github.com/pkg/errors"
+	"time"
 )
 
 type service struct {
 	repo Repository
+}
+
+func (svc *service) PublishPostByUUID(ctx context.Context, postUUID string) (*Entity, error) {
+	entity, err := svc.repo.FindByUUID(ctx, postUUID)
+	if err != nil {
+		return nil, errors.Wrap(err, "error on find post by uuid")
+	}
+
+	if entity == nil {
+		return nil, ErrPostWithUUIDNotFound{UUID: postUUID}
+	}
+
+	if entity.PublishedAt == nil {
+		now := time.Now()
+		entity.PublishedAt = &now
+
+		err = svc.repo.UpdateByUUID(ctx, postUUID, *entity)
+		if err != nil {
+			return nil, errors.Wrap(err, "error on update post by uuid")
+		}
+	}
+
+	return entity, nil
 }
 
 func (svc *service) UpdatePostByUUID(ctx context.Context, postUUID string, req UpdatePostByUUIDRequest) (*Entity, error) {
@@ -75,7 +99,7 @@ func (svc *service) GetPostByUUID(ctx context.Context, postUUID string) (*Entity
 	return entity, nil
 }
 
-func (svc *service) GetPostBySlug(ctx context.Context, slug string) (*Entity, error) {
+func (svc *service) GetPublishedPostBySlug(ctx context.Context, slug string) (*Entity, error) {
 	entity, err := svc.repo.FindBySlug(ctx, slug)
 	if err != nil {
 		return nil, errors.Wrap(err, "error on find post by slug")
@@ -83,6 +107,10 @@ func (svc *service) GetPostBySlug(ctx context.Context, slug string) (*Entity, er
 
 	if entity == nil {
 		return nil, ErrPostWithSlugNotFound{Slug: slug}
+	}
+
+	if entity.PublishedAt == nil {
+		return nil, ErrPostWithSlugNotPublished{Slug: slug}
 	}
 
 	return entity, nil

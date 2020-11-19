@@ -8,9 +8,14 @@ schema {
 type Mutation {
     createPost(request: createPostRequest!): post!
     logIn(request: logInRequest!): logInResponse!
+    publishPostByUUID(uuid: ID!): post!
+    updatePostByUUID(request: updatePostByUUIDRequest!, uuid: ID!): post!
 }
 
 type Query {
+    getPostByUUID(uuid: ID!): post!
+    getPublishedPostBySlug(slug: String!): post!
+    listPosts: [post!]!
     me: user!
 }
 
@@ -22,6 +27,7 @@ type logInResponse {
 type post {
     contentHTML: String!
     contentMarkdown: String!
+    publishedAt: String
     slug: String!
     title: String!
     uuid: ID!
@@ -41,4 +47,10 @@ input createPostRequest {
 input logInRequest {
     password: String!
     username: String!
+}
+
+input updatePostByUUIDRequest {
+    contentMarkdown: String!
+    slug: String = ""
+    title: String!
 }
