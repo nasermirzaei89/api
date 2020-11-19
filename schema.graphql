@@ -5,26 +5,19 @@ schema {
     mutation: Mutation
 }
 
-type Mutation {
-    createPost(request: createPostRequest!): post!
-    logIn(request: logInRequest!): logInResponse!
-    publishPostByUUID(uuid: ID!): post!
-    updatePostByUUID(request: updatePostByUUIDRequest!, uuid: ID!): post!
-}
-
-type Query {
-    getPostByUUID(uuid: ID!): post!
-    getPublishedPostBySlug(slug: String!): post!
-    listPosts: [post!]!
-    me: user!
-}
-
-type logInResponse {
+type LogInResponse {
     accessToken: String!
-    user: user!
+    user: User!
 }
 
-type post {
+type Mutation {
+    createPost(request: CreatePostRequest!): Post!
+    logIn(request: LogInRequest!): LogInResponse!
+    publishPostByUUID(uuid: ID!): Post!
+    updatePostByUUID(request: UpdatePostByUUIDRequest!, uuid: ID!): Post!
+}
+
+type Post {
     contentHTML: String!
     contentMarkdown: String!
     publishedAt: String
@@ -33,23 +26,30 @@ type post {
     uuid: ID!
 }
 
-type user {
+type Query {
+    getPostByUUID(uuid: ID!): Post!
+    getPublishedPostBySlug(slug: String!): Post!
+    listPosts: [Post!]!
+    me: User!
+}
+
+type User {
     username: String!
     uuid: ID!
 }
 
-input createPostRequest {
+input CreatePostRequest {
     contentMarkdown: String!
     slug: String = ""
     title: String!
 }
 
-input logInRequest {
+input LogInRequest {
     password: String!
     username: String!
 }
 
-input updatePostByUUIDRequest {
+input UpdatePostByUUIDRequest {
     contentMarkdown: String!
     slug: String = ""
     title: String!

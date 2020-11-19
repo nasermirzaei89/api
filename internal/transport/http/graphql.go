@@ -60,7 +60,7 @@ func (h *handler) newSchema() graphql.Schema {
 	})
 
 	typeUser := graphql.NewObject(graphql.ObjectConfig{
-		Name: "user",
+		Name: "User",
 		Fields: graphql.Fields{
 			"uuid": &graphql.Field{
 				Type: graphql.NewNonNull(graphql.ID),
@@ -80,7 +80,7 @@ func (h *handler) newSchema() graphql.Schema {
 	types = append(types, typeUser)
 
 	typePost := graphql.NewObject(graphql.ObjectConfig{
-		Name: "post",
+		Name: "Post",
 		Fields: graphql.Fields{
 			"uuid": &graphql.Field{
 				Type: graphql.NewNonNull(graphql.ID),
@@ -129,7 +129,7 @@ func (h *handler) newSchema() graphql.Schema {
 	types = append(types, typeUser)
 
 	typeLogInRequest := graphql.NewInputObject(graphql.InputObjectConfig{
-		Name: "logInRequest",
+		Name: "LogInRequest",
 		Fields: graphql.InputObjectConfigFieldMap{
 			"username": &graphql.InputObjectFieldConfig{
 				Type: graphql.NewNonNull(graphql.String),
@@ -143,7 +143,7 @@ func (h *handler) newSchema() graphql.Schema {
 	types = append(types, typeLogInRequest)
 
 	typeLogInResponse := graphql.NewObject(graphql.ObjectConfig{
-		Name: "logInResponse",
+		Name: "LogInResponse",
 		Fields: graphql.Fields{
 			"accessToken": &graphql.Field{
 				Type: graphql.NewNonNull(graphql.String),
@@ -196,7 +196,7 @@ func (h *handler) newSchema() graphql.Schema {
 	)
 
 	typeCreatePostRequest := graphql.NewInputObject(graphql.InputObjectConfig{
-		Name: "createPostRequest",
+		Name: "CreatePostRequest",
 		Fields: graphql.InputObjectConfigFieldMap{
 			"title": &graphql.InputObjectFieldConfig{
 				Type: graphql.NewNonNull(graphql.String),
@@ -239,7 +239,7 @@ func (h *handler) newSchema() graphql.Schema {
 	)
 
 	typeUpdatePostByUUIDRequest := graphql.NewInputObject(graphql.InputObjectConfig{
-		Name: "updatePostByUUIDRequest",
+		Name: "UpdatePostByUUIDRequest",
 		Fields: graphql.InputObjectConfigFieldMap{
 			"title": &graphql.InputObjectFieldConfig{
 				Type: graphql.NewNonNull(graphql.String),
