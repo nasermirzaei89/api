@@ -13,8 +13,9 @@ require (
 	github.com/json-iterator/go v1.1.10
 	github.com/lib/pq v1.8.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
+	github.com/minio/minio-go/v7 v7.0.5
 	github.com/nasermirzaei89/env v1.2.0
 	github.com/nasermirzaei89/jwt v0.0.0-20191012203123-932fbb1484a6
 	github.com/pkg/errors v0.9.1
-	golang.org/x/crypto v0.0.0-20191227163750-53104e6ec876
+	golang.org/x/crypto v0.0.0-20200709230013-948cd5f35899
 )

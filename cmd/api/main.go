@@ -1,10 +1,14 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	_ "github.com/lib/pq" // import postgres driver
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/nasermirzaei89/api/internal/repositories/postgres"
+	"github.com/nasermirzaei89/api/internal/services/file"
 	"github.com/nasermirzaei89/api/internal/services/post"
 	"github.com/nasermirzaei89/api/internal/services/user"
 	"github.com/nasermirzaei89/api/internal/transport/http"
@@ -32,21 +36,57 @@ func postgresDB() *sql.DB {
 	return db
 }
 
+func minioClient(ctx context.Context) *minio.Client {
+	client, err := minio.New(env.MustGetString("MINIO_ENDPOINT"), &minio.Options{
+		Creds:  credentials.NewStaticV4(env.MustGetString("MINIO_ACCESS_KEY"), env.MustGetString("MINIO_SECRET_KEY"), ""),
+		Secure: env.GetBool("MINIO_SECURE", false),
+	})
+	if err != nil {
+		log.Fatalln(errors.Wrap(err, "error create new minio client"))
+	}
+
+	// check bucket
+	exists, err := client.BucketExists(ctx, env.MustGetString("MINIO_BUCKET"))
+	if err != nil {
+		panic(errors.Wrap(err, "error on check minio bucket"))
+	}
+
+	if !exists {
+		err := client.MakeBucket(ctx, env.MustGetString("MINIO_BUCKET"), minio.MakeBucketOptions{})
+		if err != nil {
+			panic(errors.Wrap(err, "error on make minio bucket"))
+		}
+	}
+
+	return client
+}
+
 func main() {
+	// prerequisites
+	// logger
 	l := log.New(os.Stdout, fmt.Sprintln(), 0)
 
+	// rsa 256 key pair
 	signKey := env.MustGetString("API_SIGN_KEY")
 	verificationKey := env.MustGetString("API_VERIFICATION_KEY")
 
+	// database
 	db := postgresDB()
 
+	// minio
+	mc := minioClient(context.Background())
+
+	// repositories
 	userRepo := postgres.NewUserRepository(db)
 	postRepo := postgres.NewPostRepository(db)
 
+	// services
 	userSvc := user.NewService(userRepo, []byte(signKey), []byte(verificationKey))
 	postSvc := post.NewService(postRepo)
+	fileSvc := file.NewService(mc, env.MustGetString("MINIO_BUCKET"))
 
-	h := http.NewHandler(l, userSvc, postSvc)
+	// transport
+	h := http.NewHandler(l, userSvc, postSvc, fileSvc)
 
 	err := gohttp.ListenAndServe(env.GetString("API_ADDRESS", ":80"), h)
 	if err != nil {
