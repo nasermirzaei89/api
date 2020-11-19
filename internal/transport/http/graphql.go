@@ -21,10 +21,25 @@ func (h *handler) handleGraphQL() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req Request
 
-		err := json.NewDecoder(r.Body).Decode(&req)
-		if err != nil {
-			respond(w, r, badRequest("invalid request body"))
-			return
+		if r.Method == http.MethodPost {
+			err := json.NewDecoder(r.Body).Decode(&req)
+			if err != nil {
+				respond(w, r, badRequest("invalid request body"))
+				return
+			}
+		}
+
+		if r.Method == http.MethodGet {
+			req.Query = r.URL.Query().Get("query")
+			req.OperationName = r.URL.Query().Get("operationName")
+
+			if variables := r.URL.Query().Get("variables"); variables != "" {
+				err := json.Unmarshal([]byte(variables), &req.Variables)
+				if err != nil {
+					respond(w, r, badRequest("invalid graphql variables"))
+					return
+				}
+			}
 		}
 
 		res := graphql.Do(graphql.Params{

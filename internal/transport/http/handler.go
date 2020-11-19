@@ -36,7 +36,7 @@ func NewHandler(l loggerInterface, userSvc user.Service, postSvc post.Service, f
 		fileSvc: fileSvc,
 	}
 
-	h.router.Methods(http.MethodPost).Path("/graphql").HandlerFunc(h.handleGraphQL())
+	h.router.Methods(http.MethodPost, http.MethodGet).Path("/graphql").HandlerFunc(h.handleGraphQL())
 	h.router.Methods(http.MethodPost).Path("/files").HandlerFunc(h.handleUploadFile())
 	h.router.Methods(http.MethodGet).Path("/files/{fileName}").HandlerFunc(h.handleDownloadFile())
 
