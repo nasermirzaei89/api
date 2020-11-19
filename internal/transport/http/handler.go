@@ -1,6 +1,7 @@
 package http
 
 import (
+	gogzip "compress/gzip"
 	"github.com/gorilla/mux"
 	"github.com/nasermirzaei89/api/internal/services/file"
 	"github.com/nasermirzaei89/api/internal/services/post"
@@ -23,6 +24,7 @@ func NewHandler(l loggerInterface, userSvc user.Service, postSvc post.Service, f
 	r := mux.NewRouter()
 
 	r.Use(cors())
+	r.Use(gzip(gogzip.BestSpeed))
 	r.Use(logger(l))
 	r.Use(recoverPanic())
 	r.Use(authenticate(userSvc))
