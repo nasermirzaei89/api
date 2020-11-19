@@ -11,6 +11,7 @@ type Service interface {
 	ListPosts(ctx context.Context) (res []*Entity, err error)
 	UpdatePostByUUID(ctx context.Context, postUUID string, req UpdatePostByUUIDRequest) (res *Entity, err error)
 	PublishPostByUUID(ctx context.Context, postUUID string) (res *Entity, err error)
+	ListPublishedPosts(ctx context.Context) (res []*Entity, err error)
 }
 
 type CreatePostRequest struct {

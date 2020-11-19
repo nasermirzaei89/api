@@ -10,4 +10,5 @@ type Repository interface {
 	FindByUUID(ctx context.Context, uuid string) (res *Entity, err error)
 	List(ctx context.Context) (res []*Entity, err error)
 	UpdateByUUID(ctx context.Context, uuid string, entity Entity) (err error)
+	ListPublished(ctx context.Context) (res []*Entity, err error)
 }

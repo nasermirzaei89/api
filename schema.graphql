@@ -30,6 +30,7 @@ type Query {
     getPostByUUID(uuid: ID!): Post!
     getPublishedPostBySlug(slug: String!): Post!
     listPosts: [Post!]!
+    listPublishedPosts: [Post!]!
     me: User!
 }
 

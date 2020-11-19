@@ -350,6 +350,15 @@ func (h *handler) newSchema() graphql.Schema {
 		},
 	)
 
+	query.AddFieldConfig("listPublishedPosts",
+		&graphql.Field{
+			Type: graphql.NewNonNull(graphql.NewList(graphql.NewNonNull(typePost))),
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				return h.postSvc.ListPublishedPosts(p.Context)
+			},
+		},
+	)
+
 	schemaConfig := graphql.SchemaConfig{
 		Query:    query,
 		Mutation: mutation,

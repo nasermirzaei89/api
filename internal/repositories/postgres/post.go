@@ -90,6 +90,30 @@ func (repo *postRepo) List(ctx context.Context) ([]*post.Entity, error) {
 	return res, nil
 }
 
+func (repo *postRepo) ListPublished(ctx context.Context) ([]*post.Entity, error) {
+	query := `SELECT uuid, title, slug, content_markdown, content_html, published_at FROM posts WHERE published_at IS NOT NULL;`
+
+	rows, err := repo.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, errors.Wrap(errors.WithStack(err), "error on query")
+	}
+
+	res := make([]*post.Entity, 0)
+	for rows.Next() {
+		var m postModel
+		dest := []interface{}{&m.UUID, &m.Title, &m.Slug, &m.ContentMarkdown, &m.ContentHTML, &m.PublishedAt}
+		err = rows.Scan(dest...)
+		if err != nil {
+			return nil, errors.Wrap(err, "error on scan row")
+		}
+
+		entity := m.ToEntity()
+		res = append(res, &entity)
+	}
+
+	return res, nil
+}
+
 func (repo *postRepo) FindByUUID(ctx context.Context, uuid string) (*post.Entity, error) {
 	var m postModel
 

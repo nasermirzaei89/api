@@ -125,6 +125,15 @@ func (svc *service) ListPosts(ctx context.Context) ([]*Entity, error) {
 	return res, nil
 }
 
+func (svc *service) ListPublishedPosts(ctx context.Context) ([]*Entity, error) {
+	res, err := svc.repo.ListPublished(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "error on list published posts")
+	}
+
+	return res, nil
+}
+
 func (svc *service) CreatePost(ctx context.Context, req CreatePostRequest) (*Entity, error) {
 	if req.Slug == "" {
 		req.Slug = req.Title
