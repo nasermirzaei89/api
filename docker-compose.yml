@@ -72,6 +72,7 @@ services:
     depends_on:
       - traefik
       - postgres
+      - minio
     environment:
       API_POSTGRES_DSN: $API_POSTGRES_DSN
       API_POSTGRES_MAX_IDLE_CONNECTIONS: 10

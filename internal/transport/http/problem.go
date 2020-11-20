@@ -66,9 +66,9 @@ func (p Problem) Header() http.Header {
 	return res
 }
 
-type Option func(e *Problem)
+type ProblemOption func(e *Problem)
 
-func setExtension(key string, val interface{}) Option {
+func setExtension(key string, val interface{}) ProblemOption {
 	return func(e *Problem) {
 		if e.Extensions == nil {
 			e.Extensions = make(map[string]interface{})
@@ -77,7 +77,7 @@ func setExtension(key string, val interface{}) Option {
 	}
 }
 
-func internalServerError(err error, options ...Option) Problem {
+func internalServerError(err error, options ...ProblemOption) Problem {
 	log.Println(fmt.Sprintf("%+v", err))
 
 	id := sentry.CaptureException(err)
@@ -96,7 +96,7 @@ func internalServerError(err error, options ...Option) Problem {
 	return e
 }
 
-func badRequest(detail string, options ...Option) Problem {
+func badRequest(detail string, options ...ProblemOption) Problem {
 	e := Problem{
 		Status:     http.StatusBadRequest,
 		Detail:     detail,
@@ -110,7 +110,7 @@ func badRequest(detail string, options ...Option) Problem {
 	return e
 }
 
-func unauthorized(detail string, options ...Option) Problem {
+func unauthorized(detail string, options ...ProblemOption) Problem {
 	e := Problem{
 		Status:     http.StatusUnauthorized,
 		Detail:     detail,
@@ -124,7 +124,7 @@ func unauthorized(detail string, options ...Option) Problem {
 	return e
 }
 
-func forbidden(detail string, options ...Option) Problem {
+func forbidden(detail string, options ...ProblemOption) Problem {
 	e := Problem{
 		Status:     http.StatusForbidden,
 		Detail:     detail,
@@ -138,7 +138,7 @@ func forbidden(detail string, options ...Option) Problem {
 	return e
 }
 
-func notFound(detail string, options ...Option) Problem {
+func notFound(detail string, options ...ProblemOption) Problem {
 	e := Problem{
 		Status:     http.StatusNotFound,
 		Detail:     detail,
@@ -152,7 +152,7 @@ func notFound(detail string, options ...Option) Problem {
 	return e
 }
 
-func conflict(detail string, options ...Option) Problem {
+func conflict(detail string, options ...ProblemOption) Problem {
 	e := Problem{
 		Status:     http.StatusConflict,
 		Detail:     detail,
@@ -166,7 +166,7 @@ func conflict(detail string, options ...Option) Problem {
 	return e
 }
 
-func unsupportedMediaType(detail string, options ...Option) Problem {
+func unsupportedMediaType(detail string, options ...ProblemOption) Problem {
 	e := Problem{
 		Status:     http.StatusUnsupportedMediaType,
 		Detail:     detail,
@@ -180,7 +180,7 @@ func unsupportedMediaType(detail string, options ...Option) Problem {
 	return e
 }
 
-func tooManyRequests(detail string, options ...Option) Problem {
+func tooManyRequests(detail string, options ...ProblemOption) Problem {
 	e := Problem{
 		Status:     http.StatusTooManyRequests,
 		Detail:     detail,
@@ -194,7 +194,7 @@ func tooManyRequests(detail string, options ...Option) Problem {
 	return e
 }
 
-func serviceUnavailable(detail string, options ...Option) Problem {
+func serviceUnavailable(detail string, options ...ProblemOption) Problem {
 	e := Problem{
 		Status:     http.StatusServiceUnavailable,
 		Detail:     detail,

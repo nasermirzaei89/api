@@ -1,6 +1,7 @@
 package main
 
 import (
+	"compress/gzip"
 	"context"
 	"database/sql"
 	"fmt"
@@ -86,7 +87,11 @@ func main() {
 	fileSvc := file.NewService(mc, env.MustGetString("MINIO_BUCKET"))
 
 	// transport
-	h := http.NewHandler(l, userSvc, postSvc, fileSvc)
+	h := http.NewHandler(l, userSvc, postSvc, fileSvc,
+		http.SetGZipLevel(gzip.BestSpeed),
+		http.SetGraphiQL(!env.IsProduction()),
+		http.SetGraphQLPlayground(!env.IsProduction()),
+	)
 
 	err := gohttp.ListenAndServe(env.GetString("API_ADDRESS", ":80"), h)
 	if err != nil {

@@ -2,6 +2,7 @@ package http
 
 import (
 	"github.com/graphql-go/graphql"
+	gqlhandler "github.com/graphql-go/handler"
 	"github.com/nasermirzaei89/api/internal/services/post"
 	"github.com/nasermirzaei89/api/internal/services/user"
 	"github.com/pkg/errors"
@@ -9,56 +10,15 @@ import (
 	"time"
 )
 
-func (h *handler) handleGraphQL() http.HandlerFunc {
+func (h *handler) handleGraphQL(pretty, graphiQL, playground bool) http.Handler {
 	schema := h.newSchema()
 
-	type Request struct {
-		Query         string                 `json:"query"`
-		OperationName string                 `json:"operationName"`
-		Variables     map[string]interface{} `json:"variables"`
-	}
-
-	return func(w http.ResponseWriter, r *http.Request) {
-		var req Request
-
-		if r.Method == http.MethodPost {
-			err := json.NewDecoder(r.Body).Decode(&req)
-			if err != nil {
-				respond(w, r, badRequest("invalid request body"))
-				return
-			}
-		}
-
-		if r.Method == http.MethodGet {
-			req.Query = r.URL.Query().Get("query")
-			req.OperationName = r.URL.Query().Get("operationName")
-
-			if variables := r.URL.Query().Get("variables"); variables != "" {
-				err := json.Unmarshal([]byte(variables), &req.Variables)
-				if err != nil {
-					respond(w, r, badRequest("invalid graphql variables"))
-					return
-				}
-			}
-		}
-
-		res := graphql.Do(graphql.Params{
-			Schema:         schema,
-			RequestString:  req.Query,
-			RootObject:     nil,
-			VariableValues: req.Variables,
-			OperationName:  req.OperationName,
-			Context:        r.Context(),
-		})
-
-		if res.HasErrors() {
-			// TODO: manage error type
-			respond(w, r, badRequest("error in request", setExtension("errors", res.Errors)))
-			return
-		}
-
-		respond(w, r, res)
-	}
+	return gqlhandler.New(&gqlhandler.Config{
+		Schema:     &schema,
+		Pretty:     pretty,
+		GraphiQL:   graphiQL,
+		Playground: playground,
+	})
 }
 
 func (h *handler) newSchema() graphql.Schema {
