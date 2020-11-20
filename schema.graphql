@@ -58,6 +58,7 @@ type PostEdge {
 type Query {
     getPostByUUID(uuid: String!): Post!
     getPublishedPostBySlug(slug: String!): Post!
+    health: Boolean!
     listPosts(after: String, before: String, first: Int, last: Int): PostConnection
     listPublishedPosts(after: String, before: String, first: Int, last: Int): PostConnection
     me: User!

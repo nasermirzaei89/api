@@ -34,6 +34,13 @@ func (h *handler) newSchema() graphql.Schema {
 		Fields: graphql.Fields{},
 	})
 
+	query.AddFieldConfig("health", &graphql.Field{
+		Type: graphql.NewNonNull(graphql.Boolean),
+		Resolve: func(_ graphql.ResolveParams) (interface{}, error) {
+			return true, nil
+		},
+	})
+
 	typeUser := graphql.NewObject(graphql.ObjectConfig{
 		Name: "User",
 		Fields: graphql.Fields{
