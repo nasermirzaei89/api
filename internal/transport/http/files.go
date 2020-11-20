@@ -4,7 +4,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"net/http"
-	"time"
 )
 
 func (h *handler) handleUploadFile() http.HandlerFunc {
@@ -41,6 +40,12 @@ func (h *handler) handleDownloadFile() http.HandlerFunc {
 			return
 		}
 
-		http.ServeContent(w, r, fileName, time.Time{}, res)
+		lm, err := h.fileSvc.GetFileLastModified(r.Context(), fileName)
+		if err != nil {
+			respond(w, r, internalServerError(errors.Wrap(err, "error on get file last modified")))
+			return
+		}
+
+		http.ServeContent(w, r, fileName, *lm, res)
 	}
 }

@@ -10,6 +10,7 @@ import (
 	"io"
 	"mime"
 	"net/http"
+	"time"
 )
 
 type service struct {
@@ -61,6 +62,15 @@ func (svc *service) DownloadFile(ctx context.Context, fileName string) (io.ReadS
 	}
 
 	return res, nil
+}
+
+func (svc *service) GetFileLastModified(ctx context.Context, fileName string) (*time.Time, error) {
+	res, err := svc.mc.StatObject(ctx, svc.bucketName, fileName, minio.StatObjectOptions{})
+	if err != nil {
+		return nil, errors.Wrap(errors.WithStack(err), "error on get object")
+	}
+
+	return &res.LastModified, nil
 }
 
 func NewService(mc *minio.Client, bucketName string) Service {
