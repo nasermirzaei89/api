@@ -41,7 +41,36 @@ func (h *handler) newSchema() graphql.Schema {
 		},
 	})
 
-	typeUser := graphql.NewObject(graphql.ObjectConfig{
+	var typeUser, typePost *graphql.Object
+
+	nodeDefinitions := relay.NewNodeDefinitions(relay.NodeDefinitionsConfig{
+		IDFetcher: func(id string, info graphql.ResolveInfo, ctx context.Context) (interface{}, error) {
+			resolvedID := relay.FromGlobalID(id)
+
+			switch resolvedID.Type {
+			case "User":
+				return h.userSvc.GetUserByUUID(ctx, resolvedID.ID)
+			case "Post":
+				return h.postSvc.GetPostByUUID(ctx, resolvedID.ID)
+			default:
+				return nil, errors.New("unknown node type")
+			}
+		},
+		TypeResolve: func(p graphql.ResolveTypeParams) *graphql.Object {
+			switch p.Value.(type) {
+			case *user.Entity:
+				return typeUser
+			case *post.Entity:
+				return typePost
+			default:
+				return nil
+			}
+		},
+	})
+
+	query.AddFieldConfig("node", nodeDefinitions.NodeField)
+
+	typeUser = graphql.NewObject(graphql.ObjectConfig{
 		Name: "User",
 		Fields: graphql.Fields{
 			"id": relay.GlobalIDField("User", func(obj interface{}, info graphql.ResolveInfo, ctx context.Context) (string, error) {
@@ -58,9 +87,12 @@ func (h *handler) newSchema() graphql.Schema {
 				},
 			},
 		},
+		Interfaces: []*graphql.Interface{
+			nodeDefinitions.NodeInterface,
+		},
 	})
 
-	typePost := graphql.NewObject(graphql.ObjectConfig{
+	typePost = graphql.NewObject(graphql.ObjectConfig{
 		Name: "Post",
 		Fields: graphql.Fields{
 			"id": relay.GlobalIDField("Post", func(obj interface{}, info graphql.ResolveInfo, ctx context.Context) (string, error) {
@@ -105,6 +137,9 @@ func (h *handler) newSchema() graphql.Schema {
 					return nil, nil
 				},
 			},
+		},
+		Interfaces: []*graphql.Interface{
+			nodeDefinitions.NodeInterface,
 		},
 	})
 

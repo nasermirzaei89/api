@@ -5,6 +5,12 @@ schema {
     mutation: Mutation
 }
 
+"An object with an ID"
+interface Node {
+    "The id of the object"
+    id: ID!
+}
+
 type LogInResponse {
     accessToken: String!
     user: User!
@@ -29,7 +35,7 @@ type PageInfo {
     startCursor: String
 }
 
-type Post {
+type Post implements Node {
     contentHTML: String!
     contentMarkdown: String!
     "The ID of an object"
@@ -62,9 +68,14 @@ type Query {
     listPosts(after: String, before: String, first: Int, last: Int): PostConnection
     listPublishedPosts(after: String, before: String, first: Int, last: Int): PostConnection
     me: User!
+    "Fetches an object given its ID"
+    node(
+        "The ID of an object"
+        id: ID!
+    ): Node
 }
 
-type User {
+type User implements Node {
     "The ID of an object"
     id: ID!
     username: String!
