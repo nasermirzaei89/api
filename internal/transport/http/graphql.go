@@ -3,9 +3,11 @@ package http
 import (
 	"github.com/graphql-go/graphql"
 	gqlhandler "github.com/graphql-go/handler"
+	"github.com/graphql-go/relay"
 	"github.com/nasermirzaei89/api/internal/services/post"
 	"github.com/nasermirzaei89/api/internal/services/user"
 	"github.com/pkg/errors"
+	"golang.org/x/net/context"
 	"net/http"
 	"time"
 )
@@ -22,8 +24,6 @@ func (h *handler) handleGraphQL(pretty, graphiQL, playground bool) http.Handler 
 }
 
 func (h *handler) newSchema() graphql.Schema {
-	types := make([]graphql.Type, 0)
-
 	query := graphql.NewObject(graphql.ObjectConfig{
 		Name:   "Query",
 		Fields: graphql.Fields{},
@@ -37,12 +37,13 @@ func (h *handler) newSchema() graphql.Schema {
 	typeUser := graphql.NewObject(graphql.ObjectConfig{
 		Name: "User",
 		Fields: graphql.Fields{
-			"uuid": &graphql.Field{
-				Type: graphql.NewNonNull(graphql.ID),
-				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					return p.Source.(*user.Entity).UUID, nil
-				},
-			},
+			"id": relay.GlobalIDField("User", func(obj interface{}, info graphql.ResolveInfo, ctx context.Context) (string, error) {
+				switch obj := obj.(type) {
+				case *user.Entity:
+					return obj.UUID, nil
+				}
+				return "", errors.New("object is not a user")
+			}),
 			"username": &graphql.Field{
 				Type: graphql.NewNonNull(graphql.String),
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
@@ -52,17 +53,16 @@ func (h *handler) newSchema() graphql.Schema {
 		},
 	})
 
-	types = append(types, typeUser)
-
 	typePost := graphql.NewObject(graphql.ObjectConfig{
 		Name: "Post",
 		Fields: graphql.Fields{
-			"uuid": &graphql.Field{
-				Type: graphql.NewNonNull(graphql.ID),
-				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					return p.Source.(*post.Entity).UUID, nil
-				},
-			},
+			"id": relay.GlobalIDField("Post", func(obj interface{}, info graphql.ResolveInfo, ctx context.Context) (string, error) {
+				switch obj := obj.(type) {
+				case *post.Entity:
+					return obj.UUID, nil
+				}
+				return "", errors.New("object is not a post")
+			}),
 			"title": &graphql.Field{
 				Type: graphql.NewNonNull(graphql.String),
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
@@ -101,7 +101,10 @@ func (h *handler) newSchema() graphql.Schema {
 		},
 	})
 
-	types = append(types, typeUser)
+	postConnectionDefinition := relay.ConnectionDefinitions(relay.ConnectionConfig{
+		Name:     "Post",
+		NodeType: typePost,
+	})
 
 	typeLogInRequest := graphql.NewInputObject(graphql.InputObjectConfig{
 		Name: "LogInRequest",
@@ -114,8 +117,6 @@ func (h *handler) newSchema() graphql.Schema {
 			},
 		},
 	})
-
-	types = append(types, typeLogInRequest)
 
 	typeLogInResponse := graphql.NewObject(graphql.ObjectConfig{
 		Name: "LogInResponse",
@@ -134,8 +135,6 @@ func (h *handler) newSchema() graphql.Schema {
 			},
 		},
 	})
-
-	types = append(types, typeLogInResponse)
 
 	query.AddFieldConfig("me",
 		&graphql.Field{
@@ -186,8 +185,6 @@ func (h *handler) newSchema() graphql.Schema {
 		},
 	})
 
-	types = append(types, typeCreatePostRequest)
-
 	mutation.AddFieldConfig("createPost",
 		&graphql.Field{
 			Args: graphql.FieldConfigArgument{
@@ -229,13 +226,11 @@ func (h *handler) newSchema() graphql.Schema {
 		},
 	})
 
-	types = append(types, typeUpdatePostByUUIDRequest)
-
 	mutation.AddFieldConfig("updatePostByUUID",
 		&graphql.Field{
 			Args: graphql.FieldConfigArgument{
 				"uuid": &graphql.ArgumentConfig{
-					Type: graphql.NewNonNull(graphql.ID),
+					Type: graphql.NewNonNull(graphql.String),
 				},
 				"request": &graphql.ArgumentConfig{
 					Type: graphql.NewNonNull(typeUpdatePostByUUIDRequest),
@@ -263,7 +258,7 @@ func (h *handler) newSchema() graphql.Schema {
 		&graphql.Field{
 			Args: graphql.FieldConfigArgument{
 				"uuid": &graphql.ArgumentConfig{
-					Type: graphql.NewNonNull(graphql.ID),
+					Type: graphql.NewNonNull(graphql.String),
 				},
 			},
 			Type: graphql.NewNonNull(typePost),
@@ -282,7 +277,7 @@ func (h *handler) newSchema() graphql.Schema {
 		&graphql.Field{
 			Args: graphql.FieldConfigArgument{
 				"uuid": &graphql.ArgumentConfig{
-					Type: graphql.NewNonNull(graphql.ID),
+					Type: graphql.NewNonNull(graphql.String),
 				},
 			},
 			Type: graphql.NewNonNull(typePost),
@@ -313,23 +308,49 @@ func (h *handler) newSchema() graphql.Schema {
 
 	query.AddFieldConfig("listPosts",
 		&graphql.Field{
-			Type: graphql.NewNonNull(graphql.NewList(graphql.NewNonNull(typePost))),
+			Type: postConnectionDefinition.ConnectionType,
+			Args: relay.ConnectionArgs,
 			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 				userID := p.Context.Value(contextKeyUserUUID)
 				if userID == nil {
 					return nil, errors.New("unauthorized request")
 				}
 
-				return h.postSvc.ListPosts(p.Context)
+				args := relay.NewConnectionArguments(p.Args)
+
+				res, err := h.postSvc.ListPosts(p.Context)
+				if err != nil {
+					return nil, err
+				}
+
+				data := make([]interface{}, len(res))
+				for i := range res {
+					data[i] = res[i]
+				}
+
+				return relay.ConnectionFromArray(data, args), nil
 			},
 		},
 	)
 
 	query.AddFieldConfig("listPublishedPosts",
 		&graphql.Field{
-			Type: graphql.NewNonNull(graphql.NewList(graphql.NewNonNull(typePost))),
+			Type: postConnectionDefinition.ConnectionType,
+			Args: relay.ConnectionArgs,
 			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				return h.postSvc.ListPublishedPosts(p.Context)
+				args := relay.NewConnectionArguments(p.Args)
+
+				res, err := h.postSvc.ListPublishedPosts(p.Context)
+				if err != nil {
+					return nil, err
+				}
+
+				data := make([]interface{}, len(res))
+				for i := range res {
+					data[i] = res[i]
+				}
+
+				return relay.ConnectionFromArray(data, args), nil
 			},
 		},
 	)
@@ -337,7 +358,6 @@ func (h *handler) newSchema() graphql.Schema {
 	schemaConfig := graphql.SchemaConfig{
 		Query:    query,
 		Mutation: mutation,
-		Types:    types,
 	}
 
 	schema, err := graphql.NewSchema(schemaConfig)

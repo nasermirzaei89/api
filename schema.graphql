@@ -13,30 +13,60 @@ type LogInResponse {
 type Mutation {
     createPost(request: CreatePostRequest!): Post!
     logIn(request: LogInRequest!): LogInResponse!
-    publishPostByUUID(uuid: ID!): Post!
-    updatePostByUUID(request: UpdatePostByUUIDRequest!, uuid: ID!): Post!
+    publishPostByUUID(uuid: String!): Post!
+    updatePostByUUID(request: UpdatePostByUUIDRequest!, uuid: String!): Post!
+}
+
+"Information about pagination in a connection."
+type PageInfo {
+    "When paginating forwards, the cursor to continue."
+    endCursor: String
+    "When paginating forwards, are there more items?"
+    hasNextPage: Boolean!
+    "When paginating backwards, are there more items?"
+    hasPreviousPage: Boolean!
+    "When paginating backwards, the cursor to continue."
+    startCursor: String
 }
 
 type Post {
     contentHTML: String!
     contentMarkdown: String!
+    "The ID of an object"
+    id: ID!
     publishedAt: String
     slug: String!
     title: String!
-    uuid: ID!
+}
+
+"A connection to a list of items."
+type PostConnection {
+    "Information to aid in pagination."
+    edges: [PostEdge]
+    "Information to aid in pagination."
+    pageInfo: PageInfo!
+}
+
+"An edge in a connection"
+type PostEdge {
+    " cursor for use in pagination"
+    cursor: String!
+    "The item at the end of the edge"
+    node: Post
 }
 
 type Query {
-    getPostByUUID(uuid: ID!): Post!
+    getPostByUUID(uuid: String!): Post!
     getPublishedPostBySlug(slug: String!): Post!
-    listPosts: [Post!]!
-    listPublishedPosts: [Post!]!
+    listPosts(after: String, before: String, first: Int, last: Int): PostConnection
+    listPublishedPosts(after: String, before: String, first: Int, last: Int): PostConnection
     me: User!
 }
 
 type User {
+    "The ID of an object"
+    id: ID!
     username: String!
-    uuid: ID!
 }
 
 input CreatePostRequest {
